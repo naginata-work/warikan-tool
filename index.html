@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>気くばり割り勘計算機</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --card: #ffffff;
+    --text: #2b2b2b;
+    --sub: #767676;
+    --accent: #e2725b;
+    --accent-dark: #c85a44;
+    --border: #e5e0da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin: 8px 0 4px;
+  }
+  .lead {
+    text-align: center;
+    color: var(--sub);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--sub);
+    margin-bottom: 4px;
+  }
+  input[type="number"], select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .row > div { flex: 1; }
+  .field { margin-bottom: 14px; }
+  .person {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .person:last-child { border-bottom: none; }
+  .person input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .person select {
+    width: 130px;
+    padding: 8px;
+    font-size: 13px;
+  }
+  .add-btn, .calc-btn, .copy-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .add-btn {
+    background: #fff;
+    border: 1px dashed var(--accent);
+    color: var(--accent-dark);
+    margin-top: 8px;
+  }
+  .calc-btn {
+    background: var(--accent);
+    color: #fff;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+  .calc-btn:active { background: var(--accent-dark); }
+  .remove {
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+  .result-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .result-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+  }
+  .result-list li:last-child { border-bottom: none; }
+  .result-list .amount {
+    font-weight: bold;
+    color: var(--accent-dark);
+  }
+  .summary {
+    font-size: 12px;
+    color: var(--sub);
+    margin-bottom: 10px;
+  }
+  .copy-btn {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .note {
+    font-size: 11px;
+    color: var(--sub);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  #result { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍻 気くばり割り勘計算機</h1>
+  <p class="lead">「上司は多め・新人は少なめ」も一発計算。端数は誰が持つかも選べます。</p>
+
+  <div class="card">
+    <div class="field">
+      <label>合計金額(円)</label>
+      <input type="number" id="total" inputmode="numeric" placeholder="例: 32000">
+    </div>
+
+    <div class="row">
+      <div>
+        <label>端数の単位</label>
+        <select id="roundUnit">
+          <option value="1">1円単位</option>
+          <option value="10" selected>10円単位</option>
+          <option value="100">100円単位</option>
+        </select>
+      </div>
+      <div>
+        <label>端数の扱い</label>
+        <select id="roundMode">
+          <option value="payer" selected>幹事が多く払う</option>
+          <option value="even">全員でならす</option>
+        </select>
+      </div>
+    </div>
+
+    <label>参加者</label>
+    <div id="people"></div>
+    <button class="add-btn" id="addPerson">+ 参加者を追加</button>
+  </div>
+
+  <button class="calc-btn" id="calcBtn">割り勘を計算する</button>
+
+  <div class="card" id="result">
+    <div class="summary" id="summaryText"></div>
+    <ul class="result-list" id="resultList"></ul>
+    <button class="copy-btn" id="copyBtn">結果をコピー(LINEに貼り付け用)</button>
+    <p class="note">※このツールは計算するだけで、実際の送金・決済は行いません。集金は各自お使いの送金アプリ等でお願いします。</p>
+  </div>
+</div>
+
+<script>
+  const WEIGHTS = { light: 0.7, normal: 1, heavy: 1.5, host: 2 };
+  const WEIGHT_LABELS = { light: '少なめ(0.7)', normal: '通常(1.0)', heavy: '多め(1.5)', host: '幹事/上司(2.0)' };
+
+  const peopleEl = document.getElementById('people');
+  let personCount = 0;
+
+  function addPerson(name = '') {
+    personCount++;
+    const id = personCount;
+    const div = document.createElement('div');
+    div.className = 'person';
+    div.dataset.id = id;
+    div.innerHTML = `
+      <input type="text" placeholder="名前(任意)" value="${name}">
+      <select>
+        ${Object.entries(WEIGHT_LABELS).map(([k, label]) =>
+          `<option value="${k}" ${k === 'normal' ? 'selected' : ''}>${label}</option>`).join('')}
+      </select>
+      <button class="remove" title="削除">×</button>
+    `;
+    div.querySelector('.remove').addEventListener('click', () => {
+      div.remove();
+    });
+    peopleEl.appendChild(div);
+  }
+
+  // 初期3人分
+  addPerson('自分');
+  addPerson();
+  addPerson();
+
+  document.getElementById('addPerson').addEventListener('click', () => addPerson());
+
+  function roundTo(value, unit) {
+    return Math.round(value / unit) * unit;
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', () => {
+    const total = parseInt(document.getElementById('total').value, 10);
+    const unit = parseInt(document.getElementById('roundUnit').value, 10);
+    const mode = document.getElementById('roundMode').value;
+    const personEls = [...peopleEl.querySelectorAll('.person')];
+
+    if (!total || total <= 0) {
+      alert('合計金額を入力してください');
+      return;
+    }
+    if (personEls.length === 0) {
+      alert('参加者を1人以上追加してください');
+      return;
+    }
+
+    const people = personEls.map((el, i) => {
+      const name = el.querySelector('input').value.trim() || `参加者${i + 1}`;
+      const weightKey = el.querySelector('select').value;
+      return { name, weight: WEIGHTS[weightKey] };
+    });
+
+    const weightSum = people.reduce((s, p) => s + p.weight, 0);
+    const perWeight = total / weightSum;
+
+    // 端数丸め前の理論値
+    let amounts = people.map(p => perWeight * p.weight);
+    // 丸め
+    let rounded = amounts.map(a => roundTo(a, unit));
+    let diff = total - rounded.reduce((s, a) => s + a, 0);
+
+    if (diff !== 0) {
+      if (mode === 'payer') {
+        // 幹事(=weightが最大の人。同率なら最初の人)に差額を寄せる
+        let hostIdx = 0;
+        let maxW = -1;
+        people.forEach((p, i) => { if (p.weight > maxW) { maxW = p.weight; hostIdx = i; } });
+        rounded[hostIdx] += diff;
+      } else {
+        // 全員でならす: unit刻みで差額を順番に配分
+        let steps = Math.round(diff / unit);
+        let i = 0;
+        while (steps !== 0) {
+          const idx = i % rounded.length;
+          rounded[idx] += steps > 0 ? unit : -unit;
+          steps += steps > 0 ? -1 : 1;
+          i++;
+        }
+      }
+    }
+
+    const resultList = document.getElementById('resultList');
+    resultList.innerHTML = '';
+    people.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${p.name}</span><span class="amount">¥${rounded[i].toLocaleString()}</span>`;
+      resultList.appendChild(li);
+    });
+
+    document.getElementById('summaryText').textContent =
+      `合計 ¥${total.toLocaleString()} を ${people.length}人で割り勘(端数は${mode === 'payer' ? '幹事負担' : '均等配分'})`;
+
+    document.getElementById('result').style.display = 'block';
+
+    // コピー用テキストを保持
+    document.getElementById('copyBtn').dataset.text =
+      `【割り勘結果】合計¥${total.toLocaleString()}\n` +
+      people.map((p, i) => `${p.name}: ¥${rounded[i].toLocaleString()}`).join('\n');
+
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async (e) => {
+    const text = e.target.dataset.text || '';
+    try {
+      await navigator.clipboard.writeText(text);
+      e.target.textContent = 'コピーしました!';
+      setTimeout(() => { e.target.textContent = '結果をコピー(LINEに貼り付け用)'; }, 1500);
+    } catch {
+      alert(text);
+    }
+  });
+</script>
+</body>
+</html>
