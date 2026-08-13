@@ -149,6 +149,45 @@
     line-height: 1.5;
   }
   #result { display: none; }
+  .promo {
+    border: 1.5px dashed var(--accent);
+    text-align: center;
+  }
+  .promo .promo-tag {
+    font-size: 12px;
+    color: var(--accent-dark);
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .promo .promo-title {
+    font-size: 13.5px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    line-height: 1.5;
+  }
+  .promo .promo-desc {
+    font-size: 11.5px;
+    color: var(--sub);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+  .promo .promo-price {
+    font-size: 11px;
+    color: var(--sub);
+    margin-bottom: 8px;
+  }
+  .promo-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: bold;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
 </style>
 </head>
 <body>
@@ -192,6 +231,14 @@
     <ul class="result-list" id="resultList"></ul>
     <button class="copy-btn" id="copyBtn">結果をコピー(LINEに貼り付け用)</button>
     <p class="note">※このツールは計算するだけで、実際の送金・決済は行いません。集金は各自お使いの送金アプリ等でお願いします。</p>
+  </div>
+
+  <div class="card promo">
+    <div class="promo-tag">幹事さんへ</div>
+    <div class="promo-title">集金・案内・精算までまとめたい方へ</div>
+    <div class="promo-desc">Excelテンプレートで、集金チェック・案内文コピペ・精算記録がこれ1枚で完結します。</div>
+    <div class="promo-price">¥500 / 近日公開予定</div>
+    <span class="promo-btn" style="opacity:0.6; cursor:default;">準備中です</span>
   </div>
 </div>
 
